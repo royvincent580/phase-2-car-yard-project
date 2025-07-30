@@ -9,13 +9,25 @@ function Cars() {
   const [filteredCars, setFilteredCars] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     fetch('http://localhost:3000/cars')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
+        console.log('Fetched cars:', data);
         setCars(data);
         setFilteredCars(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching cars:', error);
+        setError('Failed to load cars. Make sure the JSON server is running on port 3000.');
         setLoading(false);
       });
   }, []);
@@ -40,6 +52,22 @@ function Cars() {
   
   if (loading) {
     return <div className="loading">Loading cars...</div>;
+  }
+  
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading Cars</h2>
+        <p>{error}</p>
+        <p>Please make sure to:</p>
+        <ol>
+          <li>Start the JSON server: <code>npm run server</code></li>
+          <li>Verify the server is running on http://localhost:3000</li>
+          <li>Check that db.json exists in the project root</li>
+        </ol>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
   }
   
   return (
